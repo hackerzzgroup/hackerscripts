@@ -4,7 +4,7 @@ monitor="acpi_video0" # look in /sys/class/backlight/
 
 
 for h in "$1";do
-    case
+    case "$derp" in 
         current)
         cat "/sys/class/backlight/$monitor/brightness"
         ;;
