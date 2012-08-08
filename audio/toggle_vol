@@ -1,0 +1,13 @@
+#!/bin/bash
+# toggle_vol -- toggle between speaker and headphones
+
+speaker_control="Speaker"
+headphone_control="Headphone"
+
+if [[ "$(amixer sget $speaker_control | grep '%' | cut -d'[' -f2 | cut -d']' -f1 | cut -d'%' -f1 | tail -n1)" -gt 0 ]];then
+    amixer sset $speaker_control 'Playback' 0%
+    amixer sset $headphone_control 'Playback' 100%
+else
+    amixer sset $speaker_control 'Playback' 100%
+    amixer sset $headphone_control 'Playback' 0%
+fi

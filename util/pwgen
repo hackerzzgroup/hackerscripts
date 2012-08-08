@@ -1,0 +1,28 @@
+#!/bin/bash
+# pwgen -- generate a password herp derp
+
+## default variables
+default_amount="20"
+default_repeats="1"
+
+
+## script
+while getopts hr:a: opt; do
+    case $opt in
+        r) # set amount to repeat
+        repeats="$OPTARG"
+        ;;
+        a) # set amount per repeat
+        amount="$OPTARG"
+        ;;
+        h) # usage and stuff
+        echo "Usage: ${0##*/} [-h] [-r repeats] [-a amount_per_repeat]"
+        ;;
+    esac
+done
+
+
+for i in $(seq 1 "${repeats:-default_repeats}"); do
+    echo {0..9} {a..z} {A..Z} "! \" # $ % & ' ( ) * + , - . / : ; < = > ? @ [ \\ ] ^ _ \` { | } ~" | tr ' ' '\n' | shuf | head -n ${amount:-$default_amount} | tr -d '\n'
+done
+echo

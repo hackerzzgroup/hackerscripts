@@ -1,0 +1,135 @@
+#!/bin/bash
+# pyfilesh (v1) -- interface with a server using PyFileServ
+# created by Hunter <hunterm.haxxr@gmail.com> 2012
+# 
+# supports uploading, uploading stdin contents, deleting files,
+# listing files connected to your account, perhaps more features later
+#
+# requires: curl, sed, tr, grep, bc, and cut. most of these should be installed.
+#
+# if $pyfilesh_porcelain is set to '1' then all output will be fitted for parsing
+#
+# how to run:
+# $ pyfilesh <upload|up> <file1> [file2] [file3]...
+# $ command | pyfilesh <uploadfromstdin|stdin|input|sprunge>
+# $ pyfilesh <delete|rm|del|remove> <id1> [id2] [id3]...
+# $ pyfilesh <hist|history|list|ls|files>
+
+## configuration variables
+api_key="$HOME/.pyfilesh-key" # can be either plaintext API key or file containing it
+pyfileserv_url="b.pyboard.net:1234" # host:port of server running PyFileServ
+
+
+## shouldn't be anything to edit below here
+
+if [[ -f "$api_key" ]];then
+    api_key=$(<${api_key})
+fi
+
+showhelp() {
+    echo "pyfilesh -- interface with a server using PyFileServ
+
+supports uploading, uploading stdin contents, deleting files, listing files
+
+how to run:
+$ pyfilesh <upload|up> <file1> [file2] [file3]...
+$ pyfilesh <uploadfromstdin|stdin|input|sprunge>
+$ pyfilesh <delete|rm|del|remove> <id1> [id2] [id3]...
+$ pyfilesh <hist|history|list|ls|files>
+
+if \$pyfilesh_porcelain is set to '1' then all output will be fitted for parsing"
+    exit
+}
+
+case "$1" in
+    upload|up)
+    shift
+    if [[ -z "$*" ]];then
+        showhelp
+    fi
+    for file in $*; do
+        if [[ "$pyfilesh_porcelain" != "1" ]];then
+            printf "Uploading file \"$file\"... "
+        fi
+        dog=$(curl -s -F "k=${api_key}" -F "f=@${file}" "$pyfileserv_url/up")
+        url=$(echo "$dog" | cut -d',' -f2)
+        id=$(echo "$dog" | cut -d',' -f3)
+        size=$(echo "$dog" | cut -d',' -f4)
+        kbsize=$(echo "$size/1000" | bc -l | cut -c-4)
+        if [[ $(echo "$url" | grep -q "$pyfileserv_url") ]];then
+            if [[ "$pyfilesh_porcelain" == "1" ]];then
+                printf "err;$dog"
+            else
+                printf "error.\n    Debug output:\n$dog\n"
+            fi
+            exit 1
+        else
+            if [[ "$pyfilesh_porcelain" == "1" ]];then
+                printf "complete;$url;$id;$kbsize\n"
+            else
+                printf " uploaded.\n    $url (ID: $id; Size: ${kbsize}K)\n"
+            fi
+        fi
+        sleep .5s
+    done
+    ;;
+    uploadfromstdin|stdin|input|sprunge)
+    echo "$(</dev/stdin)" > "/tmp/$$-stdin"
+    if [[ "$pyfilesh_porcelain" != "1" ]];then
+        printf "Uploading... "
+    fi
+    dog=$(curl -s -F "k=${api_key}" -F "f=@/tmp/$$-stdin" "$pyfileserv_url/up")
+    url=$(echo "$dog" | cut -d',' -f2)
+    id=$(echo "$dog" | cut -d',' -f3)
+    rm -f "/tmp/$$-stdin" 2>/dev/null
+    if [[ "$pyfilesh_porcelain" == "1" ]];then
+        printf "complete;$url;$id\n"
+    else
+        printf "uploaded\n    $url (ID: $id)\n"
+    fi
+    ;;
+    remove|delete|rm|del)
+    shift
+    if [[ -z "$*" ]];then
+        showhelp
+    fi
+    for item_id in $*;do
+        if [[ "$pyfilesh_porcelain" != "1" ]];then
+            printf "Deleting item #$item_id... "
+        fi
+        if [[ ! -z $(curl -s -F "k=${api_key}" -F "i=${item_id}" "$pyfileserv_url/del") ]];then
+            if [[ "$pyfilesh_porcelain" == "1" ]];then
+                printf "complete"
+            else
+                printf "deleted."
+            fi
+        else
+            if [[ "$pyfilesh_porcelain" == "1" ]];then
+                printf "fail"
+            else
+                printf "failed."
+            fi
+        fi
+        printf '\n'
+    done
+    ;;
+    hist|history|list|ls|files) # fak u json
+    h=$(curl -s "$pyfileserv_url/hist?key=${api_key}" | sed -e 's/[{}]/''/g' | awk -v k="0" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | grep -v '^  $' | grep -v '^ $' | sed 's/^  //;s/^"/File #/;s/":/:/;s/  "filename: "/    Filename: /;s/  "id: /    ID: /;s/  "timestamp: "/    Uploaded: /;s/"$//;s/  "url: "/    URL: /;s/  "views: /    Views: /')
+    if [[ -z "$h" ]];then
+        if [[ "$pyfilesh_porcelain" == "1" ]];then
+            echo "none"
+        else
+            echo "You don't have any files uploaded."
+        fi
+    fi
+    if [[ "$pyfilesh_porcelain" == "1" ]];then
+        echo "$h" | sed 's/^File #//;s/:/;/' | tr -d '\n' | sed 's/     Filename; //;s/    ID; /;/;s/    Uploaded; /\;/;s/    URL; /;/;s/    Views; /;/'
+        echo
+    else
+        echo "$h"
+    fi
+    ;;
+    *)
+    showhelp
+    ;;
+esac

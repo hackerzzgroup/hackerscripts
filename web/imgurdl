@@ -1,0 +1,14 @@
+#!/bin/bash
+
+past_wd="$PWD"
+for url in $@;do
+    url=$(echo "$url" | sed 's/#.*//;s/?.*//')
+    album=$(basename "$url")
+    mkdir "album_$album"
+    cd "album_$album"
+    for imgurl in $(wget -qO - "$url" | grep i\.imgur\.com/ | grep 'data-src="http://i.imgur.com/' | sed 's/.*data-src="//;s/" .*//;s/s\./\./' | uniq);do
+        echo -e "Downloading $imgurl...\t[Album '$album']"
+        wget -q "$imgurl"
+    done
+    cd "$past_wd"
+done

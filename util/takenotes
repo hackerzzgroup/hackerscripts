@@ -1,0 +1,37 @@
+#!/bin/bash
+# takenotes -- a simple note saver
+# Original Author: Victor Ananjevsky <ananasik@gmail.com>, 2010
+
+if [[ -e "$HOME/.config/takenotes/running" ]];then
+    echo "takenotes: an instance is already running!"
+    exit 2
+fi
+
+mkdir "$HOME/.config/takenotes/"
+
+touch "$HOME/.config/takenotes/running"
+echo "$$" > "$HOME/.config/takenotes/running"
+
+touch "$HOME/.config/takenotes/notes"
+
+rm -f "$HOME/.config/takenotes/control"
+mkfifo "$HOME/.config/takenotes/control"
+
+function show_note() {
+    [[ -e "$HOME/.config/takenotes/lock" ]] && return
+    touch "$HOME/.config/takenotes/lock"
+    touch "$HOME/.config/takenotes/temporary_notes"
+    yad --text-info --show-uri --geometry=400x200-0-0 --name="Notes" --window-icon="gnote" --title="Take Notes" --button="gtk-save:0" --button="gtk-close:1" --editable --filename="$HOME/.config/takenotes/notes" > "$HOME/.config/takenotes/temporary_notes"
+    [[ $? -eq 0 ]] && cat "$HOME/.config/takenotes/temporary_notes" > "$HOME/.config/takenotes/notes"
+    rm -f "$HOME/.config/takenotes/lock"
+    rm -f "$HOME/.config/takenotes/temporary_notes"
+}
+
+export -f show_note
+(tail -f "$HOME/.config/takenotes/control" | (yad --notification --listen --text="takenotes - Click to show the notes dialog" --action="sh -c show_note"; rm -f "$HOME/.config/takenotes/running") | tee "$HOME/.config/takenotes/log") &
+
+sleep .1s
+echo 'visible:true
+action:sh -c show_note
+icon:gnote
+menu:Take Notes!sh -c show_note!gnote|Quit!quit!gtk-quit' >> "$HOME/.config/takenotes/control"
