@@ -22,10 +22,10 @@ for h in "$1";do
         ;;
         help|*)
         echo "Usage: ${0##*/} [action] [amount]"
-        echo "\tcurrent: tells current brightness level"
-        echo "\tup: increments brightness level by one"
-        echo "\tdown: reduces brightness level by one"
-        echo "\tset: sets brightness level to [amount]"
+        echo -e "\tcurrent: tells current brightness level"
+        echo -e "\tup: increments brightness level by one"
+        echo -e "\tdown: reduces brightness level by one"
+        echo -e "\tset: sets brightness level to [amount]"
         ;;
     esac
     rm -vrf "$HOME/.$$-brightness" >/dev/null
