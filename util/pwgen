@@ -17,12 +17,13 @@ while getopts hr:a: opt; do
         ;;
         h) # usage and stuff
         echo "Usage: ${0##*/} [-h] [-r repeats] [-a amount_per_repeat]"
+        exit
         ;;
     esac
 done
 
 
-for i in $(seq 1 "${repeats:-default_repeats}"); do
+for i in $(seq 1 "${repeats:-$default_repeats}"); do
     echo {0..9} {a..z} {A..Z} "! \" # $ % & ' ( ) * + , - . / : ; < = > ? @ [ \\ ] ^ _ \` { | } ~" | tr ' ' '\n' | shuf | head -n ${amount:-$default_amount} | tr -d '\n'
 done
 echo

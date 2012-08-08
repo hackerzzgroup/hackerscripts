@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ -z "$@" ]];then
+    echo "Usage: ${0##*/} <url> [url] [url...]"
+    exit
+fi
+
 past_wd="$PWD"
 for url in $@;do
     url=$(echo "$url" | sed 's/#.*//;s/?.*//')

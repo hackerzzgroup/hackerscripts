@@ -2,14 +2,16 @@
 # brightness -- controls laptop brightness hopefully
 monitor="acpi_video0" # look in /sys/class/backlight/
 
-
-for h in "$1";do
-    case "$derp" in 
+for h in "$@";do
+    if [[ "$h" == [[:digit:]] ]];then
+        continue
+    fi
+    case "$h" in
         current)
         cat "/sys/class/backlight/$monitor/brightness"
         ;;
         up)
-        echo "$(( $(cat /sys/class/backlight/$monitor/  brightness) + 1 ))" > "$HOME/.$$-brightness"
+        echo "$(( $(cat /sys/class/backlight/$monitor/brightness) + 1 ))" > "$HOME/.$$-brightness"
         sudo bash -c "cat '$HOME/.$$-brightness' > /sys/class/backlight/$monitor/brightness"
         ;;
         down)
@@ -20,13 +22,17 @@ for h in "$1";do
         echo "$2" > "$HOME/.$$-brightness"
         sudo bash -c "cat '$HOME/.$$-brightness' > /sys/class/backlight/$monitor/brightness"
         ;;
-        help|*)
+        help)
         echo "Usage: ${0##*/} [action] [amount]"
         echo -e "\tcurrent: tells current brightness level"
         echo -e "\tup: increments brightness level by one"
         echo -e "\tdown: reduces brightness level by one"
         echo -e "\tset: sets brightness level to [amount]"
         ;;
+        *)
+        echo "${0##*/}: \"$h\" is an invalid argument"
+        ;;
     esac
+    shift
     rm -vrf "$HOME/.$$-brightness" >/dev/null
 done
