@@ -7,7 +7,7 @@
 # Current version:
 # [r3] 8-10-2012 -- formats are now shared by both lastfm and rest of np functions
 #                   added Compact2 format (on request of gando)
-# [r2] 9-05-2012 -- fixed asterisk bug
+# [r2] 8-05-2012 -- fixed asterisk bug
 # 
 # Arguments:
 #   -p <player>  -- provide a player from the $apps variable and we will try to
