@@ -43,6 +43,8 @@
 #       np: artist - title (On album/stream <album/stream title>)
 #   Compact:
 #       np: artist - title [album]
+#   Compact2:
+#       np: artist (album) - title
 #   Full:
 #       Now Playing: artist - title (On album/stream <album/stream title>)
 #   Wordy1:
@@ -163,53 +165,6 @@ while getopts ":f:p:oahtxlu:" opt; do
     esac
 done
 
-apikey="57caa77e0d0a2f2adaa8d2c82d19b9b3"
-if [[ "$lfm" == 'true' ]];then
-    shift
-    data=$(wget -qO - "http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&nowplaying=true&user=$lfm_user&api_key=$apikey&limit=1&format=json") 
-    case "$data" in
-        '{"error":6,"message":"No user with that name was found"}')
-        echo "ricenp: It appears that that LastFM username is not valid." >&2
-        exit 2
-        ;;
-        '{"error"'*)
-        echo "ricenp: There was an error while trying to reach LastFM." >&2
-        exit 3
-        ;;
-    esac
-        
-    artist=$(echo "$data" | sed 's/.*"artist":{"#text":"//;s/","mbid":".*"name":".*//')
-    album=$(echo "$data" | sed 's/.*"streamable".*,"album":{"#text":"//;s/","mbid".*,"url":.*//')
-    title=$(echo "$data" | sed 's/.*"},"name":"//;s/","streamable".*//')
-    case "$format" in
-        normal)
-        echo "np: $artist - $title (On album $album)"
-        ;;
-        compact)
-        echo "np: $artist - $title [$album]"
-        ;;
-        full)
-        echo "Now Playing: $artist - $title (On album $album)"
-        ;;
-        wordy1)
-        echo "Now Playing: $title by $artist on $album"
-        ;;
-        wordy2)
-        echo "Now Playing: $title by $artist [$album]"
-        ;;
-        wordy3)
-        echo "np: $title by $artist on $album"
-        ;;
-        wordy4)
-        echo "np: $title by $artist [$album]"
-        ;;
-        *)
-        echo "ricenp: \"$format\" is not a valid format. Use -o for a listing of valid formats."
-        ;;
-    esac
-    exit
-fi
-
 shopt -u extglob
 export MPD_HOST
 export MPD_PORT
@@ -269,6 +224,9 @@ saynp() {
         compact)
         np="np: $artist - $title [$album]"
         ;;
+        compact2)
+        np="np: $artist ($album) - $title"
+        ;;
         full)
         np="Now Playing: $artist - $title (On $type $album)"
         ;;
@@ -320,6 +278,27 @@ checkandnp() {
     fi
     saynp
 }
+apikey="57caa77e0d0a2f2adaa8d2c82d19b9b3"
+if [[ "$lfm" == 'true' ]];then
+    shift
+    data=$(wget -qO - "http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&nowplaying=true&user=$lfm_user&api_key=$apikey&limit=1&format=json") 
+    case "$data" in
+        '{"error":6,"message":"No user with that name was found"}')
+        echo "ricenp: It appears that that LastFM username is not valid." >&2
+        exit 2
+        ;;
+        '{"error"'*)
+        echo "ricenp: There was an error while trying to reach LastFM." >&2
+        exit 3
+        ;;
+    esac
+        
+    artist=$(echo "$data" | sed 's/.*"artist":{"#text":"//;s/","mbid":".*"name":".*//')
+    album=$(echo "$data" | sed 's/.*"streamable".*,"album":{"#text":"//;s/","mbid".*,"url":.*//')
+    title=$(echo "$data" | sed 's/.*"},"name":"//;s/","streamable".*//')
+    checkandnp
+    exit
+fi
 
 amount=$(echo "$apps" | wc -w)
 if [[ "$use_specified_player" == 'true' ]];then
