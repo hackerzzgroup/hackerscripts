@@ -5,21 +5,10 @@
 # Continue down for configuration. Arguments are below too.
 #
 # Current version:
-# 8-05-2012 -- fixed asterisk bug
-# 7-29-2012 -- let's start numbering our versions. this is r1.
-#              multiple formats! listing is below arguments.
-#              writes errors to stderr like it should now
-#              notify-send is no longer needed
-# 7-25-2012 -- fixed totem support... again
-#              changed name to ricenp because this script is extremely riced
-# 7-23-2012 -- added support for xfce4-genmon-plugin
-#              added support for choosing a player manually
-#              added lastfm user querying from arguments
-#              added play/pause toggling for most players
-#                    ...not yet supported for vlc, decibel, or pogo
-#              using getopt for argument reading now
-#              fixed some players that had broken now playing parsing
-#
+# [r3] 8-10-2012 -- formats are now shared by both lastfm and rest of np functions
+#                   added Compact2 format (on request of gando)
+# [r2] 9-05-2012 -- fixed asterisk bug
+# 
 # Arguments:
 #   -p <player>  -- provide a player from the $apps variable and we will try to
 #                   query that player instead of a player we've detected
@@ -57,6 +46,19 @@
 #       np: title by artist [<album/stream title>]
 #
 # Changelog:
+# 7-29-2012 -- let's start numbering our versions. this is r1.
+#              multiple formats! listing is below arguments.
+#              writes errors to stderr like it should now
+#              notify-send is no longer needed
+# 7-25-2012 -- fixed totem support... again
+#              changed name to ricenp because this script is extremely riced
+# 7-23-2012 -- added support for xfce4-genmon-plugin
+#              added support for choosing a player manually
+#              added lastfm user querying from arguments
+#              added play/pause toggling for most players
+#                    ...not yet supported for vlc, decibel, or pogo
+#              using getopt for argument reading now
+#              fixed some players that had broken now playing parsing
 # 7-04-2012 -- added support for pretty much any player anyone uses
 #              TODO: support for mplayer (if possible) and dragon player?
 #
@@ -92,7 +94,7 @@ apps="totem gmusicbrowser mpd clementine quodlibet rhythmbox pithos amarok spoti
 
 ## Nothing to configure below here.
 set -f
-verdate="August 5th, 2012"
+verdate="August 10th, 2012"
 ver="r3"
 all_supported_apps="totem gmusicbrowser mpd clementine quodlibet rhythmbox amarok spotify vlc tomahawk pogo mocp nuvolaplayer guayadeque exaile decibel banshee deadbeef audacious xnoise pithos"
 formats="normal compact full wordy1 wordy2 wordy3 wordy4"
