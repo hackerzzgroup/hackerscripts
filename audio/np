@@ -1,13 +1,14 @@
 #!/bin/bash
-# ricenp -- one np script to rule them all, r3
+# ricenp -- one np script to rule them all, r3.1
 # created by Hunter <hunterm.haxxr@gmail.com> 2010-2012
 #
 # Continue down for configuration. Arguments are below too.
 #
 # Current version:
-# [r3] 8-10-2012 -- formats are now shared by both lastfm and rest of np functions
-#                   added Compact2 format (on request of gando)
-# [r2] 8-05-2012 -- fixed asterisk bug
+# [r3.1] 8-14-2012 -- forgot to add Compact2 to the $formats variable
+# [r3]   8-10-2012 -- formats are now shared by both lastfm and rest of np functions
+#                     added Compact2 format (on request of gando)
+# [r2]   8-05-2012 -- fixed asterisk bug
 # 
 # Arguments:
 #   -p <player>  -- provide a player from the $apps variable and we will try to
@@ -97,7 +98,7 @@ set -f
 verdate="August 10th, 2012"
 ver="r3"
 all_supported_apps="totem gmusicbrowser mpd clementine quodlibet rhythmbox amarok spotify vlc tomahawk pogo mocp nuvolaplayer guayadeque exaile decibel banshee deadbeef audacious xnoise pithos"
-formats="normal compact full wordy1 wordy2 wordy3 wordy4"
+formats="normal compact compact2 full wordy1 wordy2 wordy3 wordy4"
 format=$(echo "$format" | tr 'A-Z' 'a-z')
 while getopts ":f:p:oahtxlu:" opt; do
     case $opt in
