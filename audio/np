@@ -1,10 +1,14 @@
 #!/bin/bash
-# ricenp -- one np script to rule them all, r3.1
+# ricenp -- one np script to rule them all, r3.2
 # created by Hunter <hunterm.haxxr@gmail.com> 2010-2012
 #
 # Continue down for configuration. Arguments are below too.
 #
 # Current version:
+# [r3.2] 9-09-2012 -- np formats now more suited for totem -- only show filename
+#                     totem actually works now, so that's good I guess
+#                     basename of filename used instead of full path now
+#                     spaces are converted correctly now too
 # [r3.1] 8-14-2012 -- forgot to add Compact2 to the $formats variable
 # [r3]   8-10-2012 -- formats are now shared by both lastfm and rest of np functions
 #                     added Compact2 format (on request of gando)
@@ -95,7 +99,7 @@ apps="totem gmusicbrowser mpd clementine quodlibet rhythmbox pithos amarok spoti
 
 ## Nothing to configure below here.
 set -f
-verdate="August 10th, 2012"
+verdate="September 9th, 2012"
 ver="r3"
 all_supported_apps="totem gmusicbrowser mpd clementine quodlibet rhythmbox amarok spotify vlc tomahawk pogo mocp nuvolaplayer guayadeque exaile decibel banshee deadbeef audacious xnoise pithos"
 formats="normal compact compact2 full wordy1 wordy2 wordy3 wordy4"
@@ -210,7 +214,7 @@ dochecks() {
         album="$album"
     fi
     
-    if [[ "$album" == "<noalbum>" && "$artist" == "<no artist>" && "$title" == "<no title>" ]];then
+    if [[ "$album" == "<no album>" && "$artist" == "<no artist>" && "$title" == "<no title>" ]];then
         if [[ "$genmon" == 'true' ]];then
             echo
             exit
@@ -222,35 +226,67 @@ dochecks() {
 saynp() {
     case "$format" in
         normal)
-        np="np: $artist - $title (On $type $album)"
+        if [[ "$lc" != "totem" ]];then
+            np="np: $artist - $title (On $type $album)"
+        else
+            np="np: $title"
+        fi
         ;;
         compact)
-        np="np: $artist - $title [$album]"
+        if [[ "$lc" != "totem" ]];then
+            np="np: $artist - $title [$album]"
+        else
+            np="np: $title"
+        fi
         ;;
         compact2)
-        np="np: $artist ($album) - $title"
+        if [[ "$lc" != "totem" ]];then
+            np="np: $artist ($album) - $title"
+        else
+            np="np: $title"
+        fi
         ;;
         full)
-        np="Now Playing: $artist - $title (On $type $album)"
+        if [[ "$lc" != "totem" ]];then
+            np="Now Playing: $artist - $title (On $type $album)"
+        else
+            np="Now Playing: $title"
+        fi
         ;;
         wordy1)
-        np="Now Playing: $title by $artist on $album"
+        if [[ "$lc" != "totem" ]];then
+            np="Now Playing: $title by $artist on $album"
+        else
+            np="Now Playing: $title"
+        fi
         ;;
         wordy2)
-        np="Now Playing: $title by $artist [$album]"
+        if [[ "$lc" != "totem" ]];then
+            np="Now Playing: $title by $artist [$album]"
+        else
+            np="Now Playing: $title"
+        fi
         ;;
         wordy3)
-        np="np: $title by $artist on $album"
+        if [[ "$lc" != "totem" ]];then
+            np="np: $title by $artist on $album"
+        else
+            np="np: $title"
+        fi
         ;;
         wordy4)
-        np="np: $title by $artist [$album]"
+        if [[ "$lc" != "totem" ]];then
+            np="np: $title by $artist [$album]"
+        else
+            np="np: $title"
+        fi
         ;;
         *)
         np="ricenp: \"$format\" is not a valid format. Use -o for a listing of valid formats."
         ;;
     esac
     if [[ "$genmon" == "true" ]];then
-        if [[ "$np" != *'<no title>'* && "$np" != *'<no artist>'* && "$np" != *'<no album>'* ]];then
+        if [[ "$title" != '<no title>' && "$artist" != '<no artist>'* && "$album" != '<no album>' ]];then
             if [[ "$use_genmon_img" == "true" ]];then
                 img="<img>$genmon_img</img>"
             fi
@@ -260,10 +296,6 @@ saynp() {
                 fi
                 click="<click>$player_toggle_command</click>"
             fi
-        else
-            click=
-            img=
-            np=
         fi
         echo "$click$img<txt>$np</txt>"
     else
@@ -323,7 +355,7 @@ case $lc in
     imlast
     player_toggle_command="totem --play-pause"
     data=$(echo $(dbus-send --print-reply --session --dest=org.mpris.MediaPlayer2.totem /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:'org.mpris.MediaPlayer2.Player' string:'Metadata' 2>/dev/null | tr -d '\n' 2>/dev/null))
-    title=$(echo $(echo "$data" | sed 's/.*"mpris:trackid" variant string "file:\/\///;s/" ) .*//'))
+    title=$(basename "$(echo $(echo "$data" | sed 's/.*"mpris:trackid" variant string "file:\/\///;s/" ) .*//;s/\%20/ /g'))")
     album=
     artist=
     checkandnp
