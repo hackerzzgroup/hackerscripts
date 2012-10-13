@@ -1,19 +1,21 @@
 #!/bin/bash
-# ricenp -- one np script to rule them all, r3.21
+# ricenp -- one np script to rule them all, r3.22
 # created by Hunter <hunterm.haxxr@gmail.com> 2010-2012
 #
 # Continue down for configuration. Arguments are below too.
 #
 # Current version:
-# [r3.21] 9-09-2012 -- gnome-mplayer support
-# [r3.2]  9-09-2012 -- np formats now more suited for totem -- only show filename
+# [r3.22] 10-6-2012 -- [quodlibet] -- detection fix
+#                      [pithos]    -- nothing playing fix
+#        10-13-2012 -- general bug fixes
+# [r3.21] 9-09-2012 -- [gnome-mplayer] support
+# [r3.2]  9-09-2012 -- np formats now more suited for [totem] -- only show filename
 #                      totem actually works now, so that's good I guess
 #                      basename of filename used instead of full path now
 #                      spaces are converted correctly now too
 # [r3.1]  8-14-2012 -- forgot to add Compact2 to the $formats variable
 # [r3]    8-10-2012 -- formats are now shared by both lastfm and rest of np functions
-#                      added Compact2 format (on request of gando)
-# [r2]    8-05-2012 -- fixed asterisk bug
+#                      added Compact2 format (on request of 
 # 
 # Arguments:
 #   -p <player>  -- provide a player from the $apps variable and we will try to
@@ -25,6 +27,7 @@
 #   -t           -- toggle playing status of detected or specified player
 #   -f <format>  -- uses format instead of format currently in configuration
 #   -o           -- list valid formats
+#   -a           -- list valid players
 #   -h           -- show this help message
 #
 # Formats:
@@ -52,30 +55,31 @@
 #       np: title by artist [<album/stream title>]
 #
 # Changelog:
-# 7-29-2012 -- let's start numbering our versions. this is r1.
+# [r2]      -- fixed asterisk bug
+# [r1.2]    -- let's start numbering our versions. this is r1.2.
 #              multiple formats! listing is below arguments.
 #              writes errors to stderr like it should now
 #              notify-send is no longer needed
-# 7-25-2012 -- fixed totem support... again
+# [r1.12]   -- fixed totem support... again
 #              changed name to ricenp because this script is extremely riced
-# 7-23-2012 -- added support for xfce4-genmon-plugin
+# [r1.1]    -- added support for xfce4-genmon-plugin
 #              added support for choosing a player manually
 #              added lastfm user querying from arguments
 #              added play/pause toggling for most players
 #                    ...not yet supported for vlc, decibel, or pogo
 #              using getopt for argument reading now
 #              fixed some players that had broken now playing parsing
-# 7-04-2012 -- added support for pretty much any player anyone uses
-#              TODO: support for mplayer (if possible) and dragon player?
+# [r1]     -- added support for pretty much any player anyone uses
+#             TODO: support for mplayer (if possible) and dragon player?
 #
-# 6-21-2012 -- added lastfm support
-#              added clementine support (on request of iSpawn)
+# [r0.5]   -- added lastfm support
+#             added clementine support (on request of iSpawn)
 #
-# 6-20-2012 -- fixed some weird bug with mpc
-# 6-17-2012 -- updated banshee support
-# 2-22-2012 -- added mpd password support
-# 2-10-2012 -- added mocp support
-# 2-04-2012 -- added spotify support
+# [r0.4]   -- fixed some weird bug with mpc
+# [r0.3]   -- updated banshee support
+# [r0.21]  -- added mpd password support
+# [r0.2]   -- added mocp support
+# [r0.1]   -- added spotify support
 
 
 
@@ -83,13 +87,13 @@
 MPD_HOST="localhost" # <password>@<host> or just <host>, nothing = localhost with no password
 MPD_PORT= # uses normal port if empty
 lastfm_user="huntermhaxx" # uses this name if you don't provide one to -l
-format="Wordy1"
+format="wordy4"
 
 # xfce4-genmon related
 use_genmon_img=false # if you'd like to show an image in addition to the np stuff
 genmon_img="/usr/share/icons/gnome-colors-common/16x16/actions/player_play.png"
 use_genmon_click=false # if you want to be able to click on the image and execute
-                      # the player toggle command
+                       # the player toggle command
 
 # You may adjust priority in which apps will be checked here.
 # You can take out an app if you're sure you won't ever use it.
@@ -100,8 +104,8 @@ apps="gnome-mplayer gmusicbrowser totem mpd clementine quodlibet rhythmbox pitho
 
 ## Nothing to configure below here.
 set -f
-verdate="September 9th, 2012"
-ver="r3"
+verdate="October 13th, 2012"
+ver="r3.22"
 all_supported_apps="gnome-mplayer gmusicbrowser totem mpd clementine quodlibet rhythmbox amarok spotify vlc tomahawk pogo mocp nuvolaplayer guayadeque exaile decibel banshee deadbeef audacious xnoise pithos"
 formats="normal compact compact2 full wordy1 wordy2 wordy3 wordy4"
 format=$(echo "$format" | tr 'A-Z' 'a-z')
@@ -162,6 +166,7 @@ while getopts ":f:p:oahtxlu:" opt; do
 -t\t\t-- toggle playing status of detected or specified player
 -f <format>\t-- uses format instead of format currently in configuration
 -o\t\t-- list valid formats
+-a\t\t-- list valid players
 -h\t\t-- show this help message"
         echo 
         exit
@@ -179,15 +184,15 @@ export MPD_PORT
 
 imlast() {
     if [[ -z $(pgrep -f ".*$lc.*") ]];then
-        if [[ "$genmon" == 'true' ]];then
-            echo
-            exit
-        fi
         nothingplaying
     fi
 }
 
 nothingplaying() {
+    if [[ "$genmon" == 'true' ]];then
+        echo
+        exit 1
+    fi
     echo "ricenp: It appears you're not playing anything." >&2
     exit 1
 }
@@ -205,7 +210,7 @@ dochecks() {
         title="$title"
     fi
 
-    if [[ -z "$artist" || "$type" == "stream" ]];then
+    if [[ -z "$artist" && "$type" != "stream" ]];then
         artist="<no artist>"
     fi
 
@@ -227,56 +232,56 @@ dochecks() {
 saynp() {
     case "$format" in
         normal)
-        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" ]];then
+        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" && "$type" != "stream" ]];then
             np="np: $artist - $title (On $type $album)"
         else
             np="np: $title"
         fi
         ;;
         compact)
-        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" ]];then
+        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" && "$type" == "stream" ]];then
             np="np: $artist - $title [$album]"
         else
             np="np: $title"
         fi
         ;;
         compact2)
-        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" ]];then
+        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" && "$type" != "stream" ]];then
             np="np: $artist ($album) - $title"
         else
             np="np: $title"
         fi
         ;;
         full)
-        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" ]];then
+        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" && "$type" != "stream" ]];then
             np="Now Playing: $artist - $title (On $type $album)"
         else
             np="Now Playing: $title"
         fi
         ;;
         wordy1)
-        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" ]];then
+        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" && "$type" != "stream" ]];then
             np="Now Playing: $title by $artist on $album"
         else
             np="Now Playing: $title"
         fi
         ;;
         wordy2)
-        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" ]];then
+        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" && "$type" != "stream" ]];then
             np="Now Playing: $title by $artist [$album]"
         else
             np="Now Playing: $title"
         fi
         ;;
         wordy3)
-        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" ]];then
+        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" && "$type" != "stream" ]];then
             np="np: $title by $artist on $album"
         else
             np="np: $title"
         fi
         ;;
         wordy4)
-        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" ]];then
+        if [[ "$lc" != "totem" && "$lc" != "gnome-mplayer" && "$type" != "stream" ]];then
             np="np: $title by $artist [$album]"
         else
             np="np: $title"
@@ -404,6 +409,9 @@ case $lc in
     title=$(echo $(echo "$data" | sed 's/.*dict entry( string "xesam:title" variant string "//;s/" ) dict entry( .*//'))
     album=$(echo $(echo "$data" | sed 's/.*dict entry( string "xesam:album" variant string "//;s/" ) dict entry( .*//'))
     artist=$(echo $(echo "$data" | sed 's/.*dict entry( string "xesam:artist" variant array \[ string "//;s/" \] ) dict entry( .*//'))
+    if [[ "$title" == 'Title Unknown' ]];then
+        nothingplaying
+    fi
     checkandnp
     ;;
     nuvolaplayer)
@@ -479,9 +487,15 @@ case $lc in
     mpd)
     imlast
     player_toggle_command="mpc toggle"
-    title=$(mpc -f '%title%' current 2>/dev/null)
-    artist=$(mpc -f '%artist%' current 2>/dev/null)
-    album=$(mpc -f '%album%' current 2>/dev/null)
+    if [[ "$(mpc -f '%file%' current 2>/dev/null)" == "http"* ]];then
+        type='stream'
+        stream_title=$(mpc -f '%title%' current 2>/dev/null)
+        title="$stream_title"
+    else
+        title=$(mpc -f '%title%' current 2>/dev/null)
+        artist=$(mpc -f '%artist%' current 2>/dev/null)
+        album=$(mpc -f '%album%' current 2>/dev/null)
+    fi
     checkandnp
     ;;
     rhythmbox)
@@ -521,13 +535,16 @@ case $lc in
     ;;
     quodlibet)
     imlast
-    if [[ "$(quodlibet --print-playing 2>/dev/null)" == "No song is currently playing." ]];then
+    if [[ "$(pgrep quodlibet >/dev/null; echo $?)" != 0 ]];then
         nothingplaying
     fi
     player_toggle_command="quodlibet --play-pause"
     artist=$(quodlibet --print-playing "<artist>" 2>/dev/null)
     album=$(quodlibet --print-playing "<album>" 2>/dev/null)
     title=$(quodlibet --print-playing "<title>" 2>/dev/null)
+    if [[ "$artist" == "No song is currently playing." ]];then
+        nothingplaying
+    fi
     checkandnp
     ;;
     clementine)
