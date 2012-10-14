@@ -1,10 +1,11 @@
 #!/bin/bash
-# ricenp -- one np script to rule them all, r3.22
+# ricenp -- one np script to rule them all, r3.23
 # created by Hunter <hunterm.haxxr@gmail.com> 2010-2012
 #
 # Continue down for configuration. Arguments are below too.
 #
 # Current version:
+# [r3.23]10-14-2012 -- [genmon]    -- '<' and '>' escaping fix
 # [r3.22] 10-6-2012 -- [quodlibet] -- detection fix
 #                      [pithos]    -- nothing playing fix
 #        10-13-2012 -- general bug fixes
@@ -104,8 +105,8 @@ apps="gnome-mplayer gmusicbrowser totem mpd clementine quodlibet rhythmbox pitho
 
 ## Nothing to configure below here.
 set -f
-verdate="October 13th, 2012"
-ver="r3.22"
+verdate="October 14th, 2012"
+ver="r3.23"
 all_supported_apps="gnome-mplayer gmusicbrowser totem mpd clementine quodlibet rhythmbox amarok spotify vlc tomahawk pogo mocp nuvolaplayer guayadeque exaile decibel banshee deadbeef audacious xnoise pithos"
 formats="normal compact compact2 full wordy1 wordy2 wordy3 wordy4"
 format=$(echo "$format" | tr 'A-Z' 'a-z')
@@ -303,6 +304,7 @@ saynp() {
                 click="<click>$player_toggle_command</click>"
             fi
         fi
+        np=$(echo "$np" | sed 's/</\&lt;/g;s/>/\&gt;/g')
         echo "$click$img<txt>$np</txt>"
     else
         echo "$np"
