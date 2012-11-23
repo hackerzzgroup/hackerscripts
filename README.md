@@ -3,8 +3,8 @@
 scripts and things
 
 ## audio
-- np
-    - supports multiple players
+- twerk (formally ricenp)
+    - supports many players
     - supports last.fm
     - can format output for xfce4-genmon-plugin if specified
     - has multiple formats
