@@ -1,30 +1,15 @@
 #!/bin/bash
-# twerk -- one np script to rule them all, r4
-# created by Hunter <hunterm.haxxr@gmail.com> 2010-2012
+# twerk -- one np script to rule them all, r4.1
+# created by Hunter <somasissounds@gmail.com> 2010-2013
 #
 # Continue down for configuration. Arguments are below too.
 #
 # Current version:
-# [r4.1]  11-29-2012 -- [quodlibet] fixed a detection bug
+# [r4.1]     2-22-2013 -- code organization
 # [r4]    11-22-2012 -- the name now has 100% more yoloswag
 #                       added: [noise], the default elementary os music player
 #                       happy turkey day weirdos
 #
-# [r3.23] 10-14-2012 -- [genmon]    -- '<' and '>' escaping fix
-# [r3.22]  10-6-2012 -- [quodlibet] -- detection fix
-#                       [pithos]    -- nothing playing fix
-#         10-13-2012 -- general bug fixes
-#
-# [r3.21]  9-09-2012 -- [gnome-mplayer] support
-# [r3.2]   9-09-2012 -- np formats now more suited for [totem] -- only show filename
-#                       totem actually works now, so that's good I guess
-#                       basename of filename used instead of full path now
-#                       spaces are converted correctly now too
-#
-# [r3.1]   8-14-2012 -- forgot to add Compact2 to the $formats variable
-# [r3]     8-10-2012 -- formats are now shared by both lastfm and rest of np functions
-#                      added Compact2 format (on request of 
-# 
 # Arguments:
 #   -p <player>  -- provide a player from the $apps variable and we will try to
 #                   query that player instead of a player we've detected
@@ -44,7 +29,7 @@
 #       get into that much customizability and you want mpc-style syntax is becomes
 #       very complicated to do. Espically in shell script. But, it might be put in
 #       some time. Until then, here's the formats that are available.
-#   
+#
 #   Normal:
 #       np: artist - title (On album/stream <album/stream title>)
 #   Compact:
@@ -54,15 +39,29 @@
 #   Full:
 #       Now Playing: artist - title (On album/stream <album/stream title>)
 #   Wordy1:
-#       Now Playing: title by artist on <album/stream title>       
+#       Now Playing: title by artist on <album/stream title>
 #   Wordy2:
 #       Now Playing: title by artist [<album/stream title>]
 #   Wordy3:
-#       np: title by artist on <album/stream title>       
+#       np: title by artist on <album/stream title>
 #   Wordy4:
 #       np: title by artist [<album/stream title>]
 #
 # Changelog:
+# [r3.23] 10-14-2012 -- [genmon]    -- '<' and '>' escaping fix
+# [r3.22]  10-6-2012 -- [quodlibet] -- detection fix
+#                       [pithos]    -- nothing playing fix
+#         10-13-2012 -- general bug fixes
+#
+# [r3.21]  9-09-2012 -- [gnome-mplayer] support
+# [r3.2]   9-09-2012 -- np formats now more suited for [totem] -- only show filename
+#                       totem actually works now, so that's good I guess
+#                       basename of filename used instead of full path now
+#                       spaces are converted correctly now too
+#
+# [r3.1]   8-14-2012 -- forgot to add Compact2 to the $formats variable
+# [r3]     8-10-2012 -- formats are now shared by both lastfm and rest of np functions
+#                      added Compact2 format (on request of
 # [r2]      -- fixed asterisk bug
 # [r1.2]    -- let's start numbering our versions. this is r1.2.
 #              multiple formats! listing is below arguments.
@@ -92,9 +91,9 @@
 
 
 ## Configuration Variables
-MPD_HOST="localhost" # <password>@<host> or just <host>, nothing = localhost with no password
+MPD_HOST="bluh@localhost" # <password>@<host> or just <host>, nothing = localhost with no password
 MPD_PORT= # uses normal port if empty
-lastfm_user="huntermhaxx" # uses this name if you don't provide one to -l
+lastfm_user="SomasisSounds" # uses this name if you don't provide one to -u
 format="wordy4"
 
 # xfce4-genmon related
@@ -106,89 +105,17 @@ use_genmon_click=false # if you want to be able to click on the image and execut
 # You may adjust priority in which apps will be checked here.
 # You can take out an app if you're sure you won't ever use it.
 # Capitalization doesn't matter.
-apps="noise gnome-mplayer gmusicbrowser totem mpd clementine quodlibet rhythmbox pithos amarok spotify vlc tomahawk pogo mocp nuvolaplayer guayadeque exaile decibel banshee deadbeef audacious" 
+apps="mpd quodlibet amarok gmusicbrowser clementine noise gnome-mplayer totem rhythmbox pithos spotify vlc tomahawk pogo mocp nuvolaplayer guayadeque exaile decibel banshee deadbeef audacious"
 
 
 
 ## Nothing to configure below here.
 set -f
-verdate="November 23th, 2012"
-ver="r4"
+ver="r4.1"
 all_supported_apps="noise gnome-mplayer gmusicbrowser totem mpd clementine quodlibet rhythmbox amarok spotify vlc tomahawk pogo mocp nuvolaplayer guayadeque exaile decibel banshee deadbeef audacious xnoise pithos"
 formats="normal compact compact2 full wordy1 wordy2 wordy3 wordy4"
 format=$(echo "$format" | tr 'A-Z' 'a-z')
-while getopts ":f:p:oahtxlu:" opt; do
-    case $opt in
-        x)
-        genmon=true
-        ;;
-        u)
-        lfm_user="$OPTARG"
-        ;;
-        l)
-        if [[ -z "$lfm_user" ]];then
-            lfm_user="$lastfm_user"
-        fi
-        lfm=true
-        ;;
-        p)
-        player="$OPTARG"
-        use_specified_player=true
-        ;;
-        f)
-        format="$OPTARG"
-        ;;
-        o)
-        echo "Valid Formats: "
-        format2=$(for format3 in $formats;do echo -n "$format3, ";done)
-        format2_length=$(echo "$format2" | wc -c)
-        format2=$(echo "$format2" | cut -c-$(( $format2_length - 3 )))
-        echo -n "$format2."
-        echo
-        exit
-        ;;
-        a)
-        echo "Supported players: "
-        apps2=$(for app in $all_supported_apps;do echo -n "$app, ";done)
-        apps2_length=$(echo "$apps2" | wc -c)
-        apps2=$(echo "$apps2" | cut -c-$(( $apps2_length - 3 )))
-        echo -n "$apps2."
-        echo
-        exit
-        ;;
-        t)
-        toggle=true
-        ;;
-        h)
-        echo 'twerk: a now playing script'
-        echo "version $ver -- last updated on $verdate"
-        echo '(c) 2010-2012 Hunter <hunterm.haxxr@gmail.com>'
-        echo
-        echo -e "Arguments:
--p <player>\t-- provide a player from the \$apps variable and we will try to
-           \t   query that player instead of a player we've detected
--l\t\t-- uses lastfm for showing now playing instead of a local player
--u <user>\t-- uses <user> instead instead of the lastfm user specified
-         \t   in the configuration variable \$lastfm_user
--x\t\t-- adjusts output format for use with xfce4-genmon-plugin
--t\t\t-- toggle playing status of detected or specified player
--f <format>\t-- uses format instead of format currently in configuration
--o\t\t-- list valid formats
--a\t\t-- list valid players
--h\t\t-- show this help message"
-        echo 
-        exit
-        ;;
-        \?)
-        echo "-$OPTARG is not a valid option." >&2
-        exit 2
-        ;;
-    esac
-done
-
-shopt -u extglob
-export MPD_HOST
-export MPD_PORT
+apikey="57caa77e0d0a2f2adaa8d2c82d19b9b3"
 
 imlast() {
     if [[ -z $(pgrep -f ".*$lc.*") ]];then
@@ -209,7 +136,7 @@ dochecks() {
     if [[ -z "$type" ]];then
         type='album'
     fi
-    
+
     if [[ -z "$title" ]];then
         title="<no title>"
     elif [[ "$type" == "stream" ]];then
@@ -227,7 +154,7 @@ dochecks() {
     else
         album="$album"
     fi
-    
+
     if [[ "$album" == "<no album>" && "$artist" == "<no artist>" && "$title" == "<no title>" ]];then
         if [[ "$genmon" == 'true' ]];then
             echo
@@ -328,27 +255,101 @@ checkandnp() {
     fi
     saynp
 }
-apikey="57caa77e0d0a2f2adaa8d2c82d19b9b3"
-if [[ "$lfm" == 'true' ]];then
-    shift
-    data=$(wget -qO - "http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&nowplaying=true&user=$lfm_user&api_key=$apikey&limit=1&format=json") 
+
+lfm_np() {
+    data=$(wget -qO - "http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&nowplaying=true&user=$lfm_user&api_key=$apikey&limit=1&format=json")
     case "$data" in
-        '{"error":6,"message":"No user with that name was found"}')
+    '{"error":6,"message":"No user with that name was found"}')
         echo "twerk: It appears that that LastFM username is not valid." >&2
-        exit 2
-        ;;
-        '{"error"'*)
+        exit 2  
+    ;;
+    '{"error"'*)
         echo "twerk: There was an error while trying to reach LastFM." >&2
         exit 3
-        ;;
+    ;;
     esac
-        
     artist=$(echo "$data" | sed 's/.*"artist":{"#text":"//;s/","mbid":".*"name":".*//')
     album=$(echo "$data" | sed 's/.*"streamable".*,"album":{"#text":"//;s/","mbid".*,"url":.*//')
     title=$(echo "$data" | sed 's/.*"},"name":"//;s/","streamable".*//')
     checkandnp
-    exit
-fi
+}
+
+while getopts ":f:p:oahtxl:u:" opt; do
+    case $opt in
+        x)
+        genmon=true
+        ;;
+        u)
+        lfm_user="$OPTARG"
+        ;;
+        l)
+        OPTARG=$(echo "$OPTARG" | tr [A-Z] [a-z])
+        if [[ -z "$lfm_user" ]];then
+            lfm_user="$lastfm_user"
+        fi
+        lfm=true
+        lfm_np
+        ;;
+        p)
+        OPTARG=$(echo "$OPTARG" | tr [A-Z] [a-z])
+        player="$OPTARG"
+        use_specified_player=true
+        ;;
+        f)
+        OPTARG=$(echo "$OPTARG" | tr [A-Z] [a-z])
+        format="$OPTARG"
+        ;;
+        o)
+        echo "Valid Formats: "
+        format2=$(for format3 in $formats;do echo -n "$format3, ";done)
+        format2_length=$(echo "$format2" | wc -c)
+        format2=$(echo "$format2" | cut -c-$(( $format2_length - 3 )))
+        echo -n "$format2."
+        echo
+        exit
+        ;;
+        a)
+        echo "Supported players: "
+        apps2=$(for app in $all_supported_apps;do echo -n "$app, ";done)
+        apps2_length=$(echo "$apps2" | wc -c)
+        apps2=$(echo "$apps2" | cut -c-$(( $apps2_length - 3 )))
+        echo -n "$apps2."
+        echo
+        exit
+        ;;
+        t)
+        toggle=true
+        ;;
+        h)
+        echo 'twerk: a now playing script'
+        echo "version $ver"
+        echo '(c) 2010-2013 Hunter <hunterm.haxxr@gmail.com>'
+        echo
+        echo -e "Arguments:
+-p <player>\t-- provide a player from the \$apps variable and we will try to
+           \t   query that player instead of a player we've detected
+-l\t\t-- uses lastfm for showing now playing instead of a local player
+-u <user>\t-- uses <user> instead instead of the lastfm user specified
+         \t   in the configuration variable \$lastfm_user
+-x\t\t-- adjusts output format for use with xfce4-genmon-plugin
+-t\t\t-- toggle playing status of detected or specified player
+-f <format>\t-- uses format instead of format currently in configuration
+-o\t\t-- list valid formats
+-a\t\t-- list valid players
+-h\t\t-- show this help message"
+        echo
+        exit
+        ;;
+        \?)
+        echo "-$OPTARG is not a valid option." >&2
+        exit 2
+        ;;
+    esac
+done
+
+shopt -u extglob
+export MPD_HOST
+export MPD_PORT
 
 amount=$(echo "$apps" | wc -w)
 if [[ "$use_specified_player" == 'true' ]];then
@@ -363,6 +364,10 @@ else
             break
         fi
     done
+fi
+
+if [[ "$lfm" == true ]];then
+    exit
 fi
 
 case $lc in
@@ -410,7 +415,7 @@ case $lc in
     album=$(echo $(echo "$data" | sed 's/.*dict entry( string "xesam:album" variant string "//;s/" ) dict entry( .*//'))
     artist=$(echo $(echo "$data" | sed 's/.*dict entry( string "xesam:artist" variant array \[ string "//;s/" \] ) dict entry( .*//'))
     checkandnp
-    ;;  
+    ;;
     pogo)
     imlast
     player_toggle_command= # couldn't find a command or a dbus-send way of doing it that worked correctly
@@ -523,7 +528,7 @@ case $lc in
     artist=$(rhythmbox-client --print-playing-format "%aa" 2>/dev/null)
     album=$(rhythmbox-client --print-playing-format "%at" 2>/dev/null)
     stream_title=$(rhythmbox-client --print-playing-format "%st" 2>/dev/null)
-    
+
     if [[ ! -z "$stream_title" ]];then
         artist=
         album="$title"
@@ -553,7 +558,7 @@ case $lc in
     ;;
     quodlibet)
     imlast
-    if [[ "$(pgrep quodlibet >/dev/null; echo $?)" != 0 ]];then
+    if [[ "$(pgrep -f '.*quodlibet' >/dev/null; echo $?)" != 0 ]];then
         nothingplaying
     fi
     player_toggle_command="quodlibet --play-pause"
